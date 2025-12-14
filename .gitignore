@@ -1,0 +1,6 @@
+# Executable Files
+*.exe
+
+# Input Files
+*_input.txt
+*_input_part2.txt
