@@ -16,6 +16,30 @@ const TEST_INPUT =
   L1000
   """
 
+func do_rotations_left(base_pos: int, rotation: int): (int, int) =
+  ## Calcualtes how many times zero was passed by rotating the dial left `rotation` number of spaces.
+  let rotate = base_pos - rotation
+
+  let dial_position = rotate.floorMod(100)
+
+  var pass_zero_count = floorDiv(rotation, 100)
+  if rotate <= 0:
+    pass_zero_count += 1
+
+  if base_pos == 0:
+    pass_zero_count -= 1
+
+  (dial_position, pass_zero_count)
+
+func do_rotations_right(base_pos: int, rotation: int): (int, int) =
+  let rotate = base_pos + rotation
+
+  let dial_position = rotate.floorMod(100)
+
+  let pass_zero_count = floorDiv(rotate, 100)
+
+  (dial_position, pass_zero_count)
+
 proc do_rotations(input: string): int =
   var dial_position = 50
   var zero_count = 0
@@ -28,33 +52,17 @@ proc do_rotations(input: string): int =
     let direction = line[0]
     let count = parseInt(line[1..^1])
 
-    var rotation = 0
     var pass_zero_times = 0
     case direction:
       of 'L':
-        let reduced = count.floorMod(100)
-        rotation = 100 - reduced
-
-        let sum = dial_position - reduced
-        if sum < 0:
-          pass_zero_times = 1
-        else:
-          pass_zero_times = 0
+        (dial_position, pass_zero_times) = do_rotations_left(dial_position, count)
       of 'R':
-        rotation = count.floorMod(100)
-
-        let sum = dial_position + rotation
-        if sum >= 100:
-          pass_zero_times = 1
-        else:
-          pass_zero_times = 0
+        (dial_position, pass_zero_times) = do_rotations_right(dial_position, count)
       else: continue
 
-    pass_zero_times += floorDiv(count, 100)
-
-    # Save variable state
     zero_count += pass_zero_times
-    dial_position = (dial_position + rotation).floorMod(100)
+    # if dial_position == 0:
+    #   zero_count += 1
 
     echo fmt"{direction}{count:>4} -> Pass zero count: {pass_zero_times:>2}, Dial position: {dial_position:>2}, Total {zero_count:>5}"
 
@@ -64,8 +72,8 @@ let count = do_rotations(TEST_INPUT)
 echo "Final count: ", count
 
 try:
-  var stream = openFileStream("./day1_input.txt")
-  let count = do_rotations(stream.readAll())
-  echo "Final count: ", count
+  var stream = openfilestream("./day1_input.txt")
+  let count = do_rotations(stream.readall())
+  echo "final count: ", count
 except:
-  stderr.write getCurrentExceptionMsg()
+  stderr.write getcurrentexceptionmsg()
