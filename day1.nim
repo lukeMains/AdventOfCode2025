@@ -1,5 +1,4 @@
-import std/strutils
-import std/streams
+import std/strutils, strformat, streams, math
 
 const TEST_INPUT =
   """
@@ -13,6 +12,8 @@ const TEST_INPUT =
   L99
   R14
   L82
+  R68
+  L1000
   """
 
 proc do_rotations(input: string): int =
@@ -23,24 +24,39 @@ proc do_rotations(input: string): int =
     var line = line.strip()
     if "" == line:
       continue
-  
+
     let direction = line[0]
     let count = parseInt(line[1..^1])
-    echo line, " -> Direction: ", direction, ", Count: ", count
 
     var rotation = 0
+    var pass_zero_times = 0
     case direction:
       of 'L':
-        rotation = 100 - count
+        let reduced = count.floorMod(100)
+        rotation = 100 - reduced
+
+        let sum = dial_position - reduced
+        if sum < 0:
+          pass_zero_times = 1
+        else:
+          pass_zero_times = 0
       of 'R':
-        rotation = count
+        rotation = count.floorMod(100)
+
+        let sum = dial_position + rotation
+        if sum >= 100:
+          pass_zero_times = 1
+        else:
+          pass_zero_times = 0
       else: continue
 
-    dial_position = (dial_position + rotation).mod(100)
-    echo "New dial position: ", dial_position
-  
-    if dial_position == 0:
-      zero_count += 1
+    pass_zero_times += floorDiv(count, 100)
+
+    # Save variable state
+    zero_count += pass_zero_times
+    dial_position = (dial_position + rotation).floorMod(100)
+
+    echo fmt"{direction}{count:>4} -> Pass zero count: {pass_zero_times:>2}, Dial position: {dial_position:>2}, Total {zero_count:>5}"
 
   return zero_count
 
