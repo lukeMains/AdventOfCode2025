@@ -1,5 +1,9 @@
 import std/strutils, strformat, streams, math
 
+# R68
+# L1000
+# R20
+# R80
 const TEST_INPUT =
   """
   L68
@@ -12,33 +16,19 @@ const TEST_INPUT =
   L99
   R14
   L82
-  R68
-  L1000
   """
 
-func do_rotations_left(base_pos: int, rotation: int): (int, int) =
-  ## Calcualtes how many times zero was passed by rotating the dial left `rotation` number of spaces.
-  let rotate = base_pos - rotation
+func do_rotations_left(base_pos: int, rotation: int): (int, bool) =
 
-  let dial_position = rotate.floorMod(100)
+  let new_position = base_pos - rotation
 
-  var pass_zero_count = floorDiv(rotation, 100)
-  if rotate <= 0:
-    pass_zero_count += 1
+  (floorMod(new_position, 100), new_position < 0 and base_pos != 0)
 
-  if base_pos == 0:
-    pass_zero_count -= 1
+func do_rotations_right(base_pos: int, rotation: int): (int, bool) =
 
-  (dial_position, pass_zero_count)
+  let new_position = base_pos + rotation
 
-func do_rotations_right(base_pos: int, rotation: int): (int, int) =
-  let rotate = base_pos + rotation
-
-  let dial_position = rotate.floorMod(100)
-
-  let pass_zero_count = floorDiv(rotate, 100)
-
-  (dial_position, pass_zero_count)
+  (floorMod(new_position, 100), new_position > 100)
 
 proc do_rotations(input: string): int =
   var dial_position = 50
@@ -52,19 +42,26 @@ proc do_rotations(input: string): int =
     let direction = line[0]
     let count = parseInt(line[1..^1])
 
-    var pass_zero_times = 0
+    # Increment count for passing zero
+    zero_count += floorDiv(count, 100)
+    let final_rotation = floorMod(count, 100)
+
+    if final_rotation == 0:
+      continue
+
+    var strictly_passed_zero: bool
     case direction:
       of 'L':
-        (dial_position, pass_zero_times) = do_rotations_left(dial_position, count)
+        (dial_position, strictly_passed_zero) = do_rotations_left(dial_position, final_rotation)
       of 'R':
-        (dial_position, pass_zero_times) = do_rotations_right(dial_position, count)
+        (dial_position, strictly_passed_zero) = do_rotations_right(
+            dial_position, final_rotation)
       else: continue
 
-    zero_count += pass_zero_times
-    # if dial_position == 0:
-    #   zero_count += 1
+    if strictly_passed_zero or dial_position == 0:
+      zero_count += 1
 
-    echo fmt"{direction}{count:>4} -> Pass zero count: {pass_zero_times:>2}, Dial position: {dial_position:>2}, Total {zero_count:>5}"
+    echo fmt"{line:>4} -> Pass zero count: {strictly_passed_zero:>2}, Dial position: {dial_position:>2}, Total {zero_count:>5}"
 
   return zero_count
 
